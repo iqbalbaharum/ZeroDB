@@ -20,6 +20,7 @@ pub fn create_dht_table(conn: &Connection) -> Result<()> {
     conn.execute(
         "
 		create table if not exists dht (
+            uuid INTEGER not null primary key AUTOINCREMENT,
             key TEXT not null unique primary key,
             cid TEXT not null,
             owner_pk TEXT not null
@@ -52,7 +53,7 @@ pub fn add_record(conn: &Connection, key: String, owner_pk: String, cid: String)
     Ok(())
 }
 
-pub fn get_record(conn: &Connection, key: String) -> Result<(Record)> {
+pub fn get_record(conn: &Connection, key: String) -> Result<Record> {
     let mut cursor = conn
         .prepare(format!("select * from dht where key = '{}';", key))?
         .cursor();

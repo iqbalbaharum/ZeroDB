@@ -28,3 +28,10 @@ impl IFResult {
         }
     }
 }
+
+#[marine]
+#[derive(Default)]
+pub struct ResKeyPair {
+    pub pk: String,
+    pub sk: String,
+}
