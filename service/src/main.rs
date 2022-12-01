@@ -1,18 +1,19 @@
-use std::fmt::format;
 use std::ops::Deref;
 
-use ed25519_compact::{KeyPair, PublicKey, Signature};
+use ed25519_compact::KeyPair;
 use marine_rs_sdk::{marine, module_manifest};
 use rand::distributions::Alphanumeric;
 use rand::Rng;
 
 mod auth;
 mod db;
+mod ed25519;
 mod ipfs;
 mod result;
 
 use auth::*;
 use db::*;
+use ed25519::*;
 use ipfs::vault_dir;
 use result::*;
 
@@ -57,43 +58,38 @@ pub fn generate_keypair() -> ResKeyPair {
     }
 }
 
-#[marine]
-pub fn verify(public_key: String, signature: String, message: String) -> IFResult {
-    let p_key_decoded = base64::decode(public_key).unwrap();
-    let sign_decoded = base64::decode(signature).unwrap();
-
-    let pk: [u8; 32] = p_key_decoded
-        .try_into()
-        .expect("Error: public_key with incorrect length");
-
-    let sign: [u8; 64] = sign_decoded
-        .try_into()
-        .expect("Error: Sign with incorrect length");
-
-    let p_key = PublicKey::new(pk);
-
-    match p_key.verify(message, &Signature::new(sign)) {
-        Ok(_) => IFResult {
-            success: true,
-            err_msg: String::new(),
-        },
-        Err(err) => IFResult {
-            success: false,
-            err_msg: err.to_string(),
-        },
-    }
-}
-
 // add data to ipfs and then to the sqlite hash table
 #[marine]
-pub fn add(key: String, owner_pk: String, cid: String) -> IFResult {
-    // verify of the owner_pk and hash (ED25519)
-    // once verified, check if the key exists
-    // insert or update the data
-    let conn = db::get_connection(DEFAULT_PATH);
-    let res = db::add_record(&conn, key, owner_pk, cid);
+pub fn add(
+    key: String,
+    cid: String,
+    public_key: String,
+    signature: String,
+    message: String,
+) -> IFResult {
+    let verify = verify(public_key.clone(), signature, message);
 
-    IFResult::from_res(res)
+    if !verify {
+        return IFResult::from_err_str("You are not the owner!");
+    }
+
+    let conn = db::get_connection(DEFAULT_PATH);
+
+    // Check if PK exist
+    match get_record_by_pk(&conn, public_key.clone()) {
+        Ok(_) => {
+            let res = db::update_record(&conn, public_key, cid);
+            IFResult::from_res(res)
+        }
+        Err(err) => {
+            if err.code == None {
+                let res = db::add_record(&conn, key, public_key, cid);
+                IFResult::from_res(res)
+            } else {
+                IFResult::from_err_str(&err.message.unwrap())
+            }
+        }
+    }
 }
 
 #[marine]

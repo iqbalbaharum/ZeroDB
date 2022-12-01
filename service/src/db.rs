@@ -21,10 +21,10 @@ pub fn create_dht_table(conn: &Connection) -> Result<()> {
         "
 		create table if not exists dht (
             uuid INTEGER not null primary key AUTOINCREMENT,
-            key TEXT not null unique primary key,
+            key TEXT not null,
             cid TEXT not null,
             owner_pk TEXT not null
-        ) without rowid;
+        );
 		",
     )?;
 
@@ -45,7 +45,7 @@ pub fn add_record(conn: &Connection, key: String, owner_pk: String, cid: String)
     conn.execute(format!(
         "
         insert into dht (key, cid, owner_pk)
-        values ('{}', '{}', '{}');
+        values ('{}', '{}', '{}')
         ",
         key, cid, owner_pk
     ))?;
@@ -53,11 +53,30 @@ pub fn add_record(conn: &Connection, key: String, owner_pk: String, cid: String)
     Ok(())
 }
 
-pub fn get_record(conn: &Connection, key: String) -> Result<Record> {
-    let mut cursor = conn
-        .prepare(format!("select * from dht where key = '{}';", key))?
-        .cursor();
+pub fn update_record(conn: &Connection, owner_pk: String, cid: String) -> Result<()> {
+    conn.execute(format!(
+        "
+        update dht set cid = {} where owner_pk = {}
+        ",
+        cid, owner_pk
+    ))?;
 
+    Ok(())
+}
+
+pub fn get_record(conn: &Connection, key: String) -> Result<Record> {
+    read_execute(conn, format!("select * from dht where key = '{}';", key))
+}
+
+pub fn get_record_by_pk(conn: &Connection, pk: String) -> Result<Record> {
+    read_execute(
+        conn,
+        format!("select * from dht where owner_pk = '{}';", pk),
+    )
+}
+
+fn read_execute(conn: &Connection, statement: String) -> Result<Record> {
+    let mut cursor = conn.prepare(statement)?.cursor();
     let row = cursor.next()?.ok_or(get_none_error());
     let found_record = Record::from_row(row.unwrap());
     Ok(found_record?)
@@ -66,6 +85,7 @@ pub fn get_record(conn: &Connection, key: String) -> Result<Record> {
 #[marine]
 #[derive(Default)]
 pub struct Record {
+    pub uuid: i64,
     pub key: String,
     pub cid: String,
     pub public_key: String,
@@ -76,6 +96,7 @@ pub struct Record {
 impl Record {
     pub fn from_row(row: &[Value]) -> Result<Record> {
         let row_record = Record {
+            uuid: row[0].as_integer().ok_or(get_none_error())?,
             key: row[0].as_string().ok_or(get_none_error())?.to_string(),
             cid: row[1].as_string().ok_or(get_none_error())?.to_string(),
             public_key: row[2].as_string().ok_or(get_none_error())?.to_string(),
