@@ -1,3 +1,4 @@
+use log::{info, warn, Log};
 use std::ops::Deref;
 
 use ed25519_compact::KeyPair;
@@ -77,18 +78,16 @@ pub fn add(
 
     // Check if PK exist
     match get_record_by_pk(&conn, public_key.clone()) {
-        Ok(_) => {
-            let res = db::update_record(&conn, public_key, cid);
-            IFResult::from_res(res)
-        }
-        Err(err) => {
-            if err.code == None {
+        Ok(value) => {
+            if value.is_none() {
                 let res = db::add_record(&conn, key, public_key, cid);
                 IFResult::from_res(res)
             } else {
-                IFResult::from_err_str(&err.message.unwrap())
+                let res = db::update_record(&conn, public_key, cid);
+                IFResult::from_res(res)
             }
         }
+        Err(err) => IFResult::from_err_str(&err.message.unwrap()),
     }
 }
 
@@ -98,6 +97,14 @@ pub fn get(key: String) -> Record {
     let user = db::get_record(&conn, key);
 
     user.unwrap_or_default()
+}
+
+#[marine]
+pub fn get_records() -> Vec<Record> {
+    let conn = db::get_connection(DEFAULT_PATH);
+    let records = db::get_records(&conn);
+
+    records.unwrap_or_default()
 }
 
 // Write files to node /tmp storage
