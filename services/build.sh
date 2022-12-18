@@ -9,18 +9,31 @@ cd ipfs
 cargo update --aggressive
 marine build --release
 
-cd ed25519
+cd ../ed25519
 cargo update --aggressive
 marine build --release
 
-cd dht
+cd ../dht
+cargo update --aggressive
+marine build --release
+
+cd ../data
+cargo update --aggressive
+marine build --release
+
+cd ../facade
 cargo update --aggressive
 marine build --release
 
 cd ..
 mkdir -p artifacts
 rm -f artifacts/*.wasm
-cp target/wasm32-wasi/release/ipfs.wasm artifacts/
-cp target/wasm32-wasi/release/ed25519.wasm artifacts/
-cp target/wasm32-wasi/release/dht.wasm artifacts/
-# marine aqua artifacts/ipfs_pure.wasm -s Ipfs -i aqua-ipfs >../aqua/ipfs.aqua
+cp target/wasm32-wasi/release/fdb_ipfs.wasm artifacts/
+cp target/wasm32-wasi/release/fdb_ed25519.wasm artifacts/
+cp target/wasm32-wasi/release/fdb_dht.wasm artifacts/
+cp target/wasm32-wasi/release/fdb_data.wasm artifacts/
+cp target/wasm32-wasi/release/fdb_facade.wasm artifacts/
+marine aqua artifacts/fdb_facade.wasm -s Fdb -i fdb > ../aqua/aqua/fdb.aqua
+
+RUST_LOG="info" mrepl --quiet Config.toml
+

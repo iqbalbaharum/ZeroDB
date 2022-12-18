@@ -1,18 +1,18 @@
 [package]
-name = "ed25519"
+name = "data"
 version = "0.1.0"
 edition = "2021"
 publish = false
 
 [[bin]]
-name = "fdb_ed25519"
+name = "fdb_data"
 path = "src/main.rs"
 
 [dependencies]
 marine-rs-sdk = { version = "0.7.1", features = ["logger"] }
-log = "0.4.14"
-ed25519-compact = "2"
-base64 = "0.20.0"
 eyre = "0.6.5"
+log = "0.4.14"
+serde = "1.0.151"
+serde_json = "1.0.79"
 
 types = { path = "../types" }

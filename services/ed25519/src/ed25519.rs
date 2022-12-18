@@ -1,4 +1,37 @@
-use ed25519_compact::{PublicKey, Signature};
+#![allow(improper_ctypes)]
+
+use ed25519_compact::{KeyPair, PublicKey, Signature};
+use std::ops::Deref;
+
+use types::*;
+
+use marine_rs_sdk::marine;
+use marine_rs_sdk::module_manifest;
+use marine_rs_sdk::WasmLoggerBuilder;
+
+use eyre::Result;
+
+module_manifest!();
+
+pub fn main() {
+    WasmLoggerBuilder::new()
+        .with_log_level(log::LevelFilter::Info)
+        .build()
+        .unwrap();
+}
+
+#[marine]
+pub fn generate_keypair() -> FdbKeyPair {
+    let kp = KeyPair::generate();
+    let base64_pk = base64::encode(kp.pk.deref());
+
+    let base64_sk = base64::encode(kp.sk.deref());
+
+    FdbKeyPair {
+        pk: base64_pk,
+        sk: base64_sk,
+    }
+}
 
 pub fn verify(public_key: String, signature: String, message: String) -> bool {
     let p_key_decoded = base64::decode(public_key).unwrap();
