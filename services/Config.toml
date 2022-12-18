@@ -1,0 +1,18 @@
+modules_dir = "artifacts/"
+
+[[module]]
+    name = "ipfs"
+    mem_pages_count = 100
+    logger_enabled = true
+
+    [module.mounted_binaries]
+    ipfs = "/usr/local/bin/ipfs"
+    bash = "/bin/bash"
+
+    [module.wasi]
+    envs = { "/tmp/vault" = "/tmp" }
+
+# [[module]]
+#     name = "fdb_pure"
+#     mem_pages_count = 100
+#     logger_enabled = true

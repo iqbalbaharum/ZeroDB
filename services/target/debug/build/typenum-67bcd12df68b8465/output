@@ -1,0 +1,3 @@
+cargo:rerun-if-changed=build/main.rs
+cargo:rustc-env=TYPENUM_BUILD_CONSTS=/Users/iqbal/Projects/Lineage/zero_db/services/target/debug/build/typenum-67bcd12df68b8465/out/consts.rs
+cargo:rustc-env=TYPENUM_BUILD_OP=/Users/iqbal/Projects/Lineage/zero_db/services/target/debug/build/typenum-67bcd12df68b8465/out/op.rs

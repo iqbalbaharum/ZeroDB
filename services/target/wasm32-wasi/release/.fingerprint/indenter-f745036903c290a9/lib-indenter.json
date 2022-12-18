@@ -1,0 +1,1 @@
+{"rustc":7780067038968745159,"features":"[\"default\"]","target":1860185909303701288,"profile":6269190295429226618,"path":849607537376790962,"deps":[],"local":[{"CheckDepInfo":{"dep_info":"wasm32-wasi/release/.fingerprint/indenter-f745036903c290a9/dep-lib-indenter"}}],"rustflags":[],"metadata":13029896730158976736,"config":2202906307356721367,"compile_kind":16489420942494921214}
