@@ -5,11 +5,11 @@ set -o errexit -o nounset -o pipefail
 cd "$(dirname "$0")"
 
 # This script builds all subprojects and puts all created Wasm modules in one dir
-cd ipfs
+cd ed25519
 cargo update --aggressive
 marine build --release
 
-cd ../ed25519
+cd ../ipfs
 cargo update --aggressive
 marine build --release
 
@@ -28,12 +28,14 @@ marine build --release
 cd ..
 mkdir -p artifacts
 rm -f artifacts/*.wasm
-cp target/wasm32-wasi/release/fdb_ipfs.wasm artifacts/
 cp target/wasm32-wasi/release/fdb_ed25519.wasm artifacts/
+cp target/wasm32-wasi/release/fdb_ipfs.wasm artifacts/
 cp target/wasm32-wasi/release/fdb_dht.wasm artifacts/
 cp target/wasm32-wasi/release/fdb_data.wasm artifacts/
 cp target/wasm32-wasi/release/fdb_facade.wasm artifacts/
 marine aqua artifacts/fdb_facade.wasm -s Fdb -i fdb > ../aqua/aqua/fdb.aqua
 
-RUST_LOG="info" mrepl --quiet Config.toml
+wget https://github.com/fluencelabs/sqlite/releases/download/v0.15.0_w/sqlite3.wasm
+mv sqlite3.wasm artifacts/
 
+RUST_LOG="info" mrepl --quiet Config.toml

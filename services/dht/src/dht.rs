@@ -4,12 +4,13 @@ use types::*;
 
 use marine_rs_sdk::marine;
 use marine_rs_sdk::module_manifest;
-use marine_rs_sdk::MountedBinaryResult;
 use marine_rs_sdk::WasmLoggerBuilder;
 
 use marine_sqlite_connector::{Connection, Error, Result, Value};
 
 module_manifest!();
+
+const DEFAULT_PATH: &str = "fdb_local";
 
 pub fn main() {
     WasmLoggerBuilder::new()
@@ -17,6 +18,64 @@ pub fn main() {
         .build()
         .unwrap();
 }
+
+#[marine]
+pub fn init_dht() -> FdbResult {
+    let conn = get_connection(DEFAULT_PATH);
+    let res = create_dht_table(&conn);
+    FdbResult::from_res(res)
+}
+
+#[marine]
+pub fn insert(
+    key: String,
+    cid: String,
+    public_key: String,
+    signature: String,
+    message: String,
+) -> FdbResult {
+    let verify = verify(public_key.clone(), signature, message);
+
+    if !verify {
+        return FdbResult::from_err_str("You are not the owner!");
+    }
+
+    let conn = get_connection(DEFAULT_PATH);
+
+    // Check if PK exist
+    match get_record_by_pk(&conn, public_key.clone()) {
+        Ok(value) => {
+            if value.is_none() {
+                let res = add_record(&conn, key, public_key, cid);
+                FdbResult::from_res(res)
+            } else {
+                let res = update_record(&conn, public_key, cid);
+                FdbResult::from_res(res)
+            }
+        }
+        Err(err) => FdbResult::from_err_str(&err.message.unwrap()),
+    }
+}
+
+#[marine]
+pub fn get_records_by_key(key: String) -> Vec<String> {
+    let conn = get_connection(DEFAULT_PATH);
+    let records = get_records(&conn, key).unwrap();
+
+    log::info!("{:?}", records);
+
+    let mut cids = Vec::new();
+
+    for record in records.iter() {
+        match record {
+            _ => cids.push(record.cid.clone()),
+        }
+    }
+
+    cids
+}
+
+/************************ *********************/
 
 pub fn get_none_error() -> Error {
     Error {
@@ -69,16 +128,16 @@ pub fn add_record(conn: &Connection, key: String, owner_pk: String, cid: String)
     Ok(())
 }
 
-pub fn get_records(conn: &Connection) -> Result<Vec<Record>> {
-    let mut cursor = conn.prepare("select * from dht;")?.cursor();
+// pub fn get_all_dht_records(conn: &Connection) -> Result<Vec<Record>> {
+//     let mut cursor = conn.prepare("select * from dht;")?.cursor();
 
-    let mut records = Vec::new();
-    while let Some(row) = cursor.next()? {
-        records.push(Record::from_row(row)?);
-    }
+//     let mut records = Vec::new();
+//     while let Some(row) = cursor.next()? {
+//         records.push(Record::from_row(row)?);
+//     }
 
-    Ok(records)
-}
+//     Ok(records)
+// }
 
 pub fn update_record(conn: &Connection, owner_pk: String, cid: String) -> Result<()> {
     conn.execute(format!(
@@ -93,8 +152,27 @@ pub fn update_record(conn: &Connection, owner_pk: String, cid: String) -> Result
     Ok(())
 }
 
-pub fn get_record(conn: &Connection, key: String) -> Result<Record> {
-    read_execute(conn, format!("select * from dht where key = '{}';", key))
+pub fn get_exact_record(conn: &Connection, key: String, pk: String) -> Result<Record> {
+    read_execute(
+        conn,
+        format!(
+            "select * from dht where key = '{}' AND owner_pk = '{}';",
+            key, pk
+        ),
+    )
+}
+
+pub fn get_records(conn: &Connection, key: String) -> Result<Vec<Record>> {
+    let mut cursor = conn
+        .prepare(format!("select * from dht where key = '{}';", key))?
+        .cursor();
+
+    let mut records = Vec::new();
+    while let Some(row) = cursor.next()? {
+        records.push(Record::from_row(row)?);
+    }
+
+    Ok(records)
 }
 
 pub fn get_record_by_pk(conn: &Connection, pk: String) -> Result<Option<Record>> {
@@ -119,7 +197,7 @@ fn read_execute(conn: &Connection, statement: String) -> Result<Record> {
 }
 
 #[marine]
-#[derive(Default, PartialEq)]
+#[derive(Default, PartialEq, Debug)]
 pub struct Record {
     pub uuid: i64,
     pub key: String,
@@ -155,4 +233,11 @@ impl Record {
             }
         }
     }
+}
+
+#[marine]
+#[link(wasm_import_module = "fdb_ed25519")]
+extern "C" {
+    #[link_name = "verify"]
+    pub fn verify(public_key: String, signature: String, message: String) -> bool;
 }

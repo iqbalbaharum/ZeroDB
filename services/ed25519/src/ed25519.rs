@@ -9,8 +9,6 @@ use marine_rs_sdk::marine;
 use marine_rs_sdk::module_manifest;
 use marine_rs_sdk::WasmLoggerBuilder;
 
-use eyre::Result;
-
 module_manifest!();
 
 pub fn main() {
@@ -33,6 +31,7 @@ pub fn generate_keypair() -> FdbKeyPair {
     }
 }
 
+#[marine]
 pub fn verify(public_key: String, signature: String, message: String) -> bool {
     let p_key_decoded = base64::decode(public_key).unwrap();
     let sign_decoded = base64::decode(signature).unwrap();

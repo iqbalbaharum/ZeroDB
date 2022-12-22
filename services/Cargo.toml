@@ -1,8 +1,8 @@
 [workspace]
 members = [
-    "ipfs",
     "ed25519",
-    "dht",
+    "ipfs",
     "data",
+    "dht",
     "facade"
 ]

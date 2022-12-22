@@ -9,6 +9,9 @@ use marine_rs_sdk::WasmLoggerBuilder;
 
 use eyre::Result;
 
+const DEFAULT_TIMEOUT_SEC: u64 = 1u64;
+const DEFAULT_IPFS_MULTIADDR: &str = "/ip4/127.0.0.1/tcp/5001";
+
 module_manifest!();
 
 pub fn main() {
@@ -44,17 +47,22 @@ fn get_timeout_string(timeout: u64) -> String {
 }
 
 #[marine]
-pub fn connect(multiaddr: String, api_multiaddr: String, timeout_sec: u64) -> FdbResult {
-    log::info!("connect called with multiaddr {}", multiaddr);
-
-    let args = vec![String::from("swarm"), String::from("connect"), multiaddr];
-    let cmd = make_cmd_args(args, api_multiaddr, timeout_sec);
-
-    unwrap_mounted_binary_result(ipfs(cmd)).map(|_| ()).into()
-}
-
-#[marine]
 pub fn dag_put(object: String, api_multiaddr: String, timeout_sec: u64) -> FdbPutResult {
+    let address: String;
+    let t;
+
+    if api_multiaddr.is_empty() {
+        address = DEFAULT_IPFS_MULTIADDR.to_string();
+    } else {
+        address = api_multiaddr;
+    }
+
+    if timeout_sec == 0 {
+        t = DEFAULT_TIMEOUT_SEC;
+    } else {
+        t = timeout_sec;
+    }
+
     log::info!("dag put called with object {}", object);
 
     let data = format!(r#"{}"#, object);
@@ -63,7 +71,7 @@ pub fn dag_put(object: String, api_multiaddr: String, timeout_sec: u64) -> FdbPu
 
     let args = vec![String::from("-c"), input];
 
-    let cmd = make_cmd_args(args, api_multiaddr, timeout_sec);
+    let cmd = make_cmd_args(args, address, t);
 
     log::info!("ipfs put args : {:?}", cmd);
 

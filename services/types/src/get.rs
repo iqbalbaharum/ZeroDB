@@ -24,3 +24,27 @@ impl From<Result<String>> for FdbGetResult {
         }
     }
 }
+
+#[marine]
+pub struct FdbGetResults {
+    pub success: bool,
+    pub error: String,
+    pub datas: Vec<String>,
+}
+
+impl From<Result<Vec<String>>> for FdbGetResults {
+    fn from(result: Result<Vec<String>>) -> Self {
+        match result {
+            Ok(datas) => Self {
+                success: true,
+                error: "".to_string(),
+                datas,
+            },
+            Err(err) => Self {
+                success: false,
+                error: err.to_string(),
+                datas: Vec::new(),
+            },
+        }
+    }
+}

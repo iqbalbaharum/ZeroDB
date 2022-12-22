@@ -1,6 +1,5 @@
-use eyre::Result;
 use marine_rs_sdk::marine;
-
+use marine_sqlite_connector::Result;
 //
 #[marine]
 pub struct FdbResult {
@@ -8,8 +7,8 @@ pub struct FdbResult {
     pub err_msg: String,
 }
 
-impl From<Result<()>> for FdbResult {
-    fn from(res: Result<()>) -> FdbResult {
+impl FdbResult {
+    pub fn from_res(res: Result<()>) -> FdbResult {
         match res {
             Ok(_v) => FdbResult {
                 success: true,
@@ -19,6 +18,13 @@ impl From<Result<()>> for FdbResult {
                 success: false,
                 err_msg: e.to_string(),
             },
+        }
+    }
+
+    pub fn from_err_str(e: &str) -> FdbResult {
+        FdbResult {
+            success: false,
+            err_msg: e.to_string(),
         }
     }
 }

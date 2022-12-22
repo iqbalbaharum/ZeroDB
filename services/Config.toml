@@ -1,6 +1,11 @@
 modules_dir = "artifacts/"
 
 [[module]]
+    name = "fdb_ed25519"
+    mem_pages_count = 100
+    logger_enabled = true
+
+[[module]]
     name = "fdb_ipfs"
     mem_pages_count = 100
     logger_enabled = true
@@ -13,17 +18,19 @@ modules_dir = "artifacts/"
     envs = { "/tmp/vault" = "/tmp" }
 
 [[module]]
+    name = "sqlite3"
+
+    [module.wasi]
+    preopened_files = ["/tmp"]
+    mapped_dirs = { "tmp" = "./tmp" }
+
+[[module]]
     name = "fdb_data"
     mem_pages_count = 100
     logger_enabled = true
 
 [[module]]
     name = "fdb_dht"
-    mem_pages_count = 100
-    logger_enabled = true
-
-[[module]]
-    name = "fdb_ed25519"
     mem_pages_count = 100
     logger_enabled = true
 

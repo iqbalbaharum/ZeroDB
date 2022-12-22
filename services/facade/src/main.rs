@@ -1,10 +1,15 @@
 #![allow(improper_ctypes)]
 
+mod auth;
+
 use marine_rs_sdk::marine;
 use marine_rs_sdk::module_manifest;
 use marine_rs_sdk::WasmLoggerBuilder;
 
-use types::FdbKeyPair;
+use auth::am_i_owner;
+use types::FdbGetResult;
+use types::FdbGetResults;
+use types::{FdbKeyPair, FdbPutResult, FdbResult};
 
 module_manifest!();
 
@@ -18,37 +23,60 @@ pub fn generate() -> FdbKeyPair {
 }
 
 #[marine]
-pub fn add(
-    key: String,
-    data: String,
-    public_key: String,
-    signature: String,
-    message: String,
-) -> FdbResult {
-    // Check if the string is a json
-    // Verify signature
-    // Check if theres previous cid
-    // Format object
-    // Add to dag
-    // Add to dht
+pub fn init_service() -> FdbResult {
+    if !am_i_owner() {
+        return FdbResult::from_err_str("You are not the owner!");
+    }
+
+    init_dht()
 }
 
 #[marine]
-pub fn fork(
-    key: String,
-    data: String,
-    forked_cid: String,
-    public_key: String,
-    signature: String,
-    message: String,
-) -> FdbResult {
-    // Check if the string is a json
-    // Verify signature
-    // Check if theres previous cid
+pub fn add(key: String, data: String, public_key: String, signature: String) -> FdbResult {
+    log::info!("data: {:?}", data);
     // Format object
     // Add to dag
+    let result: FdbPutResult = dag_put(data.clone(), "".to_string(), 0);
+    log::info!("error: {}", result.error);
     // Add to dht
+    if result.hash.len() == 0 {
+        FdbResult::from_err_str(format!("Invalid CID produce: {}", result.hash).as_str())
+    } else {
+        insert(key, result.hash, public_key, signature, data)
+    }
 }
+
+/**
+ * For fast retrieval - must your aqua to run do parallel
+ */
+#[marine]
+pub fn get_cids_from_dht(key: String) -> FdbGetResults {
+    let cids = get_records_by_key(key);
+
+    log::info!("{:?}", cids);
+
+    FdbGetResults {
+        success: true,
+        error: "".to_string(),
+        datas: cids,
+    }
+}
+
+// #[marine]
+// pub fn fork(
+//     key: String,
+//     data: String,
+//     forked_cid: String,
+//     public_key: String,
+//     signature: String,
+//     message: String,
+// ) -> FdbResult {
+//     // Verify signature
+//     // Check if theres previous cid
+//     // Format object
+//     // Add to dag
+//     // Add to dht
+// }
 
 /// Importing `fdb_ed25519` module
 #[marine]
@@ -56,4 +84,32 @@ pub fn fork(
 extern "C" {
     #[link_name = "generate_keypair"]
     pub fn generate_keypair() -> FdbKeyPair;
+}
+
+/// Importing `fdb_data` module
+#[marine]
+#[link(wasm_import_module = "fdb_dht")]
+extern "C" {
+
+    #[link_name = "init_dht"]
+    pub fn init_dht() -> FdbResult;
+
+    #[link_name = "insert"]
+    pub fn insert(
+        key: String,
+        cid: String,
+        public_key: String,
+        signature: String,
+        message: String,
+    ) -> FdbResult;
+
+    #[link_name = "get_records_by_key"]
+    pub fn get_records_by_key(key: String) -> Vec<String>;
+}
+
+#[marine]
+#[link(wasm_import_module = "fdb_ipfs")]
+extern "C" {
+    #[link_name = "dag_put"]
+    pub fn dag_put(object: String, api_multiaddr: String, timeout_sec: u64) -> FdbPutResult;
 }
