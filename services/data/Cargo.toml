@@ -1,0 +1,19 @@
+[package]
+name = "data"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "fdb_data"
+path = "src/main.rs"
+
+[dependencies]
+marine-rs-sdk = { version = "0.7.1", features = ["logger"] }
+eyre = "0.6.5"
+log = "0.4.14"
+serde = "1.0.151"
+serde_json = "1.0.79"
+serde_valid = "0.11.3"
+
+types = { path = "../types" }

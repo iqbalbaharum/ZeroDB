@@ -1,0 +1,18 @@
+[package]
+name = "dht"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[[bin]]
+name = "fdb_dht"
+path = "src/main.rs"
+
+[dependencies]
+marine-rs-sdk = { version = "0.7.1", features = ["logger"] }
+marine-sqlite-connector = "0.6.0"
+eyre = "0.6.5"
+log = "0.4.14"
+serde_json = "1.0.64"
+
+types = { path = "../types" }

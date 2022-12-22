@@ -1,0 +1,22 @@
+module Fdb declares *
+
+data FdbGetResults:
+  success: bool
+  error: string
+  datas: []string
+
+data FdbKeyPair:
+  pk: string
+  sk: string
+
+data FdbResult:
+  success: bool
+  err_msg: string
+
+service Fdb("fdb"):
+  add(key: string, data: string, public_key: string, signature: string) -> FdbResult
+  am_i_owner() -> bool
+  generate() -> FdbKeyPair
+  get_cids_from_dht(key: string) -> FdbGetResults
+  get_init_peer_id() -> string
+  init_service() -> FdbResult
