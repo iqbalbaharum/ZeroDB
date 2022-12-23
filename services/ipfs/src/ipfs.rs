@@ -82,11 +82,26 @@ pub fn dag_put(object: String, api_multiaddr: String, timeout_sec: u64) -> FdbPu
 
 #[marine]
 pub fn dag_get(hash: String, api_multiaddr: String, timeout_sec: u64) -> FdbGetResult {
+    let address: String;
+    let t;
+
+    if api_multiaddr.is_empty() {
+        address = DEFAULT_IPFS_MULTIADDR.to_string();
+    } else {
+        address = api_multiaddr;
+    }
+
+    if timeout_sec == 0 {
+        t = DEFAULT_TIMEOUT_SEC;
+    } else {
+        t = timeout_sec;
+    }
+
     log::info!("get called with hash {}", hash);
 
     let args = vec![String::from("dag"), String::from("get"), hash];
 
-    let cmd = make_cmd_args(args, api_multiaddr, timeout_sec);
+    let cmd = make_cmd_args(args, address, t);
 
     log::info!("ipfs dag get args {:?}", cmd);
 

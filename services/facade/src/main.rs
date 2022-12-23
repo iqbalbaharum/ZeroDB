@@ -8,8 +8,7 @@ use marine_rs_sdk::WasmLoggerBuilder;
 
 use auth::am_i_owner;
 use types::FdbGetResult;
-use types::FdbGetResults;
-use types::{FdbKeyPair, FdbPutResult, FdbResult};
+use types::{FdbGetResults, FdbKeyPair, FdbPutResult, FdbResult};
 
 module_manifest!();
 
@@ -18,7 +17,7 @@ pub fn main() {
 }
 
 #[marine]
-pub fn generate() -> FdbKeyPair {
+pub fn generate_new_keypair() -> FdbKeyPair {
     generate_keypair()
 }
 
@@ -47,6 +46,28 @@ pub fn add(key: String, data: String, public_key: String, signature: String) -> 
 }
 
 /**
+ * Retrieve all data from the history
+ * TODO: Incomplete - currently only read the latest data only
+ */
+#[marine]
+pub fn get_history(key: String) -> Vec<String> {
+    let results = get_cids_from_dht(key);
+
+    let mut datas: Vec<String> = Vec::new();
+
+    for cid in results.datas.iter() {
+        match cid {
+            cid => {
+                let r = ipfs_dag_get(cid.to_string());
+                datas.push(r.data.clone());
+            }
+        }
+    }
+
+    datas
+}
+
+/**
  * For fast retrieval - must your aqua to run do parallel
  */
 #[marine]
@@ -60,6 +81,14 @@ pub fn get_cids_from_dht(key: String) -> FdbGetResults {
         error: "".to_string(),
         datas: cids,
     }
+}
+
+/**
+ * Expose IPFS DAG get API to be access in service
+ */
+#[marine]
+pub fn ipfs_dag_get(cid: String) -> FdbGetResult {
+    dag_get(cid, "".to_string(), 0)
 }
 
 // #[marine]
@@ -112,4 +141,7 @@ extern "C" {
 extern "C" {
     #[link_name = "dag_put"]
     pub fn dag_put(object: String, api_multiaddr: String, timeout_sec: u64) -> FdbPutResult;
+
+    #[link_name = "dag_get"]
+    pub fn dag_get(hash: String, api_multiaddr: String, timeout_sec: u64) -> FdbGetResult;
 }

@@ -1,13 +1,10 @@
 #![allow(improper_ctypes)]
 extern crate serde;
 
-use types::*;
-
 use marine_rs_sdk::marine;
 use marine_rs_sdk::module_manifest;
 use marine_rs_sdk::WasmLoggerBuilder;
 use serde::{Deserialize, Serialize};
-use serde_valid::Validate;
 
 module_manifest!();
 
