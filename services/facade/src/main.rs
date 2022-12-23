@@ -50,7 +50,7 @@ pub fn add(key: String, data: String, public_key: String, signature: String) -> 
  * TODO: Incomplete - currently only read the latest data only
  */
 #[marine]
-pub fn get_history(key: String) -> Vec<String> {
+pub fn get_datasets(key: String) -> Vec<String> {
     let results = get_cids_from_dht(key);
 
     let mut datas: Vec<String> = Vec::new();
