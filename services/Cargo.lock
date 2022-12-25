@@ -805,6 +805,7 @@ dependencies = [
  "eyre",
  "marine-rs-sdk",
  "marine-sqlite-connector",
+ "serde",
 ]
 
 [[package]]

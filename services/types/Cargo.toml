@@ -9,3 +9,4 @@ edition = "2021"
 marine-rs-sdk = { version = "0.7.1", features = ["logger"] }
 marine-sqlite-connector = "0.6.0"
 eyre = "0.6.5"
+serde = "1.0.151"

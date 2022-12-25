@@ -1,10 +1,8 @@
-#![allow(improper_ctypes)]
-extern crate serde;
-
 use marine_rs_sdk::marine;
 use marine_rs_sdk::module_manifest;
 use marine_rs_sdk::WasmLoggerBuilder;
-use serde::{Deserialize, Serialize};
+
+use types::FdbBlock;
 
 module_manifest!();
 
@@ -16,20 +14,12 @@ pub fn main() {
 }
 
 #[marine]
-pub fn fdb_serialize(data: String, previous: String) -> String {
-    let data = FdbData { data, previous };
-
-    serde_json::to_string(&data).unwrap()
+pub fn serialize(content: String, previous: String) -> String {
+    let data = FdbBlock { content, previous };
+    serde_json::to_string(&data).unwrap_or("".to_string())
 }
 
 #[marine]
-pub fn fdb_deserialize(json: &String) -> String {
+pub fn deserialize(json: &String) -> FdbBlock {
     serde_json::from_str(json).unwrap()
-}
-
-#[marine]
-#[derive(Serialize, Deserialize)]
-struct FdbData {
-    data: String,
-    previous: String,
 }
