@@ -50,11 +50,10 @@ pub fn add(key: String, data: String, public_key: String, signature: String) -> 
 }
 
 /**
- * Retrieve all data from the history
- * TODO: Incomplete - currently only read the latest data only
+ * Retrieve latest datasets
  */
 #[marine]
-pub fn get_datasets(key: String) -> Vec<String> {
+pub fn get_latest_datasets(key: String) -> Vec<String> {
     let results = get_cids_from_dht(key);
 
     let mut datas: Vec<String> = Vec::new();
@@ -69,6 +68,29 @@ pub fn get_datasets(key: String) -> Vec<String> {
     }
 
     datas
+}
+
+#[marine]
+pub fn get_history(key: String, pk: String) -> Vec<String> {
+    let latest_cid = get_record(key.clone(), pk);
+
+    let mut items: Vec<String> = Vec::new();
+
+    let mut prev = "";
+    let mut get_result = dag_get(latest_cid, "".to_string(), 0);
+    let mut block = deserialize(&get_result.data);
+
+    items.push(block.content.clone());
+    prev = block.previous.as_str();
+
+    while prev.len() > 0 {
+        get_result = dag_get(prev.to_string(), "".to_string(), 0);
+        block = deserialize(&get_result.data);
+        items.push(block.content.clone());
+        prev = block.previous.as_str();
+    }
+
+    items
 }
 
 /**
@@ -159,6 +181,6 @@ extern "C" {
     #[link_name = "serialize"]
     pub fn serialize(content: String, previous: String) -> String;
 
-    // #[link_name = "deserialize"]
-    // pub fn deserialize(json: &String) -> FdbBlock;
+    #[link_name = "deserialize"]
+    pub fn deserialize(json: &String) -> FdbBlock;
 }
