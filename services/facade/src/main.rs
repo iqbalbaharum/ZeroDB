@@ -7,8 +7,7 @@ use marine_rs_sdk::module_manifest;
 use marine_rs_sdk::WasmLoggerBuilder;
 
 use auth::am_i_owner;
-use types::FdbGetResult;
-use types::{FdbBlock, FdbGetResults, FdbKeyPair, FdbPutResult, FdbResult};
+use types::*;
 
 module_manifest!();
 
@@ -32,15 +31,16 @@ pub fn init_service() -> FdbResult {
 
 #[marine]
 pub fn add(key: String, data: String, public_key: String, signature: String) -> FdbResult {
-    log::info!("data: {:?}", data);
-
     // Check if there`s existing block
+    let current_cid = get_record(key.clone(), public_key.clone());
+    log::info!("DHT cid: {}", current_cid);
 
     // Format object
-    let d = serialize(data, "".to_string());
+    let d = serialize(data, current_cid);
+    log::info!("Formatted data: {}", d);
     // Add to dag
     let result: FdbPutResult = dag_put(d.clone(), "".to_string(), 0);
-    log::info!("error: {}", result.error);
+    log::info!("result: {}", result.hash);
     // Add to dht
     if result.hash.len() == 0 {
         FdbResult::from_err_str(format!("Invalid CID produce: {}", result.hash).as_str())
@@ -138,6 +138,9 @@ extern "C" {
 
     #[link_name = "get_records_by_key"]
     pub fn get_records_by_key(key: String) -> Vec<String>;
+
+    #[link_name = "get_record"]
+    pub fn get_record(key: String, pk: String) -> String;
 }
 
 #[marine]
@@ -156,6 +159,6 @@ extern "C" {
     #[link_name = "serialize"]
     pub fn serialize(content: String, previous: String) -> String;
 
-    #[link_name = "deserialize"]
-    pub fn deserialize(json: &String) -> FdbBlock;
+    // #[link_name = "deserialize"]
+    // pub fn deserialize(json: &String) -> FdbBlock;
 }

@@ -37,7 +37,7 @@ pub fn insert(
     let verify = verify(public_key.clone(), signature, message);
 
     if !verify {
-        return FdbResult::from_err_str("You are not the owner!");
+        return FdbResult::from_err_str("Verification failed");
     }
 
     let conn = get_connection(DEFAULT_PATH);
@@ -73,6 +73,15 @@ pub fn get_records_by_key(key: String) -> Vec<String> {
     }
 
     cids
+}
+
+#[marine]
+pub fn get_record(key: String, pk: String) -> String {
+    let conn = get_connection(DEFAULT_PATH);
+    match get_exact_record(&conn, key, pk) {
+        Ok(record) => record.cid,
+        Err(_) => "".to_string(),
+    }
 }
 
 /************************ *********************/
@@ -120,9 +129,11 @@ pub fn add_record(conn: &Connection, key: String, owner_pk: String, cid: String)
         key, cid, owner_pk
     ))?;
 
-    println!(
+    log::info!(
         "insert into dht (key, cid, owner_pk) values ('{}', '{}', '{}');",
-        key, cid, owner_pk
+        key,
+        cid,
+        owner_pk
     );
 
     Ok(())
@@ -192,7 +203,7 @@ pub fn get_record_by_pk(conn: &Connection, pk: String) -> Result<Option<Record>>
 fn read_execute(conn: &Connection, statement: String) -> Result<Record> {
     let mut cursor = conn.prepare(statement)?.cursor();
     let row = cursor.next()?.ok_or(get_none_error());
-    let found_record = Record::from_row(row.unwrap_or_default());
+    let found_record = Record::from_row(row?);
     Ok(found_record?)
 }
 

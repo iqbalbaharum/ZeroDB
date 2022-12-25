@@ -2,6 +2,7 @@ use eyre::Result;
 use marine_rs_sdk::marine;
 
 #[marine]
+#[derive(Debug)]
 pub struct FdbGetResult {
     pub success: bool,
     pub error: String,
