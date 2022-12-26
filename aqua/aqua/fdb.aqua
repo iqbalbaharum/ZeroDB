@@ -1,9 +1,24 @@
 module Fdb declares *
 
+data FdbBlock:
+  content: string
+  previous: string
+
+data FdbGetResult:
+  success: bool
+  error: string
+  data: string
+
+data FdbRetrieval:
+  key: string
+  public_key: string
+  cid: string
+  block: FdbBlock
+
 data FdbGetResults:
   success: bool
   error: string
-  datas: []string
+  datas: []FdbRetrieval
 
 data FdbKeyPair:
   pk: string
@@ -16,7 +31,9 @@ data FdbResult:
 service Fdb("fdb"):
   add(key: string, data: string, public_key: string, signature: string) -> FdbResult
   am_i_owner() -> bool
-  generate() -> FdbKeyPair
+  generate_new_keypair() -> FdbKeyPair
   get_cids_from_dht(key: string) -> FdbGetResults
-  get_init_peer_id() -> string
+  get_history(key: string, pk: string) -> []FdbRetrieval
+  get_latest_datasets(key: string) -> []FdbRetrieval
   init_service() -> FdbResult
+  ipfs_dag_get(cid: string) -> FdbGetResult
