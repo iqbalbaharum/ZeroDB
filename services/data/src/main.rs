@@ -22,7 +22,7 @@ pub fn serialize(content: String, previous: String) -> String {
     let milliseconds = timestamp.as_millis();
 
     let data = FdbBlock {
-        timestamp: milliseconds,
+        // timestamp: milliseconds as u64,
         content,
         previous,
     };

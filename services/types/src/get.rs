@@ -1,6 +1,8 @@
 use eyre::Result;
 use marine_rs_sdk::marine;
 
+use crate::FdbRetrieval;
+
 #[marine]
 #[derive(Debug)]
 pub struct FdbGetResult {
@@ -30,11 +32,11 @@ impl From<Result<String>> for FdbGetResult {
 pub struct FdbGetResults {
     pub success: bool,
     pub error: String,
-    pub datas: Vec<String>,
+    pub datas: Vec<FdbRetrieval>,
 }
 
-impl From<Result<Vec<String>>> for FdbGetResults {
-    fn from(result: Result<Vec<String>>) -> Self {
+impl From<Result<Vec<FdbRetrieval>>> for FdbGetResults {
+    fn from(result: Result<Vec<FdbRetrieval>>) -> Self {
         match result {
             Ok(datas) => Self {
                 success: true,

@@ -1,9 +1,9 @@
 use marine_rs_sdk::marine;
 use serde::{Deserialize, Serialize};
 #[marine]
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct FdbBlock {
-    pub timestamp: u128,
+    // pub timestamp: u64,
     pub content: String,
     pub previous: String,
 }

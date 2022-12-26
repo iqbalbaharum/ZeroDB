@@ -58,7 +58,7 @@ pub fn insert(
 }
 
 #[marine]
-pub fn get_records_by_key(key: String) -> Vec<String> {
+pub fn get_records_by_key(key: String) -> Vec<FdbRetrieval> {
     let conn = get_connection(DEFAULT_PATH);
     let records = get_records(&conn, key).unwrap();
 
@@ -68,7 +68,14 @@ pub fn get_records_by_key(key: String) -> Vec<String> {
 
     for record in records.iter() {
         match record {
-            _ => cids.push(record.cid.clone()),
+            _ => cids.push(FdbRetrieval {
+                key: record.key.clone(),
+                public_key: record.public_key.clone(),
+                cid: record.cid.clone(),
+                block: FdbBlock {
+                    ..Default::default()
+                },
+            }),
         }
     }
 
@@ -76,11 +83,20 @@ pub fn get_records_by_key(key: String) -> Vec<String> {
 }
 
 #[marine]
-pub fn get_record(key: String, pk: String) -> String {
+pub fn get_record(key: String, pk: String) -> FdbRetrieval {
     let conn = get_connection(DEFAULT_PATH);
     match get_exact_record(&conn, key, pk) {
-        Ok(record) => record.cid,
-        Err(_) => "".to_string(),
+        Ok(record) => FdbRetrieval {
+            key: record.key,
+            public_key: record.public_key,
+            cid: record.cid,
+            block: FdbBlock {
+                ..Default::default()
+            },
+        },
+        Err(_) => FdbRetrieval {
+            ..Default::default()
+        },
     }
 }
 

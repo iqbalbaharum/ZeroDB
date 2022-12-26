@@ -32,7 +32,7 @@ pub fn init_service() -> FdbResult {
 #[marine]
 pub fn add(key: String, data: String, public_key: String, signature: String) -> FdbResult {
     // Check if there`s existing block
-    let current_cid = get_record(key.clone(), public_key.clone());
+    let current_cid = get_record(key.clone(), public_key.clone()).cid;
     log::info!("DHT cid: {}", current_cid);
 
     // Format object
@@ -42,27 +42,35 @@ pub fn add(key: String, data: String, public_key: String, signature: String) -> 
     let result: FdbPutResult = dag_put(d.clone(), "".to_string(), 0);
     log::info!("result: {}", result.hash);
     // Add to dht
-    if result.hash.len() == 0 {
+    if result.hash.is_empty() {
         FdbResult::from_err_str(format!("Invalid CID produce: {}", result.hash).as_str())
     } else {
+        log::info!("{} {} {} {} {}", key, result.hash, public_key, signature, d);
         insert(key, result.hash, public_key, signature, d)
     }
 }
 
 /**
  * Retrieve latest datasets
+ * { "key": "", "pk": "", data: "" }
  */
 #[marine]
-pub fn get_latest_datasets(key: String) -> Vec<String> {
+pub fn get_latest_datasets(key: String) -> Vec<FdbRetrieval> {
     let results = get_cids_from_dht(key);
 
-    let mut datas: Vec<String> = Vec::new();
+    let mut datas: Vec<FdbRetrieval> = Vec::new();
 
-    for cid in results.datas.iter() {
-        match cid {
-            cid => {
-                let r = ipfs_dag_get(cid.to_string());
-                datas.push(r.data.clone());
+    for retrieve in results.datas.iter() {
+        match retrieve {
+            retrieve => {
+                let r = ipfs_dag_get(retrieve.cid.to_string());
+                let b = deserialize(&r.data);
+                datas.push(FdbRetrieval {
+                    key: retrieve.key.clone(),
+                    public_key: retrieve.public_key.clone(),
+                    cid: retrieve.cid.clone(),
+                    block: b,
+                });
             }
         }
     }
@@ -71,23 +79,41 @@ pub fn get_latest_datasets(key: String) -> Vec<String> {
 }
 
 #[marine]
-pub fn get_history(key: String, pk: String) -> Vec<String> {
-    let latest_cid = get_record(key.clone(), pk);
+pub fn get_history(key: String, pk: String) -> Vec<FdbRetrieval> {
+    let latest_retrieve = get_record(key.clone(), pk);
+    let key_copy = latest_retrieve.key.clone();
+    let pk_copy = latest_retrieve.public_key.clone();
 
-    let mut items: Vec<String> = Vec::new();
+    let mut items: Vec<FdbRetrieval> = Vec::new();
 
-    let mut prev = "";
-    let mut get_result = dag_get(latest_cid, "".to_string(), 0);
+    let mut get_result = dag_get(latest_retrieve.cid.clone(), "".to_string(), 0);
     let mut block = deserialize(&get_result.data);
 
-    items.push(block.content.clone());
-    prev = block.previous.as_str();
+    let block_copy = block.clone();
+
+    items.push(FdbRetrieval {
+        key: key_copy.clone(),
+        public_key: pk_copy.clone(),
+        cid: latest_retrieve.cid.clone(),
+        block: block_copy.clone(),
+    });
+    
+    let mut prev = block_copy.previous.clone();
 
     while prev.len() > 0 {
         get_result = dag_get(prev.to_string(), "".to_string(), 0);
         block = deserialize(&get_result.data);
-        items.push(block.content.clone());
-        prev = block.previous.as_str();
+
+        let t_block = block.clone();
+
+        items.push(FdbRetrieval {
+            key: key_copy.clone(),
+            public_key: pk_copy.clone(),
+            cid: prev.to_string().clone(),
+            block: t_block.clone(),
+        });
+
+        prev = t_block.previous.clone();
     }
 
     items
@@ -98,14 +124,12 @@ pub fn get_history(key: String, pk: String) -> Vec<String> {
  */
 #[marine]
 pub fn get_cids_from_dht(key: String) -> FdbGetResults {
-    let cids = get_records_by_key(key);
-
-    log::info!("{:?}", cids);
+    let retrievals = get_records_by_key(key);
 
     FdbGetResults {
         success: true,
         error: "".to_string(),
-        datas: cids,
+        datas: retrievals,
     }
 }
 
@@ -159,10 +183,10 @@ extern "C" {
     ) -> FdbResult;
 
     #[link_name = "get_records_by_key"]
-    pub fn get_records_by_key(key: String) -> Vec<String>;
+    pub fn get_records_by_key(key: String) -> Vec<FdbRetrieval>;
 
     #[link_name = "get_record"]
-    pub fn get_record(key: String, pk: String) -> String;
+    pub fn get_record(key: String, pk: String) -> FdbRetrieval;
 }
 
 #[marine]
