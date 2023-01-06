@@ -1,5 +1,10 @@
 module Fdb declares *
 
+data FdbGetResult:
+  success: bool
+  error: string
+  data: string
+
 data FdbGetResults:
   success: bool
   error: string
@@ -16,7 +21,8 @@ data FdbResult:
 service Fdb("fdb"):
   add(key: string, data: string, public_key: string, signature: string) -> FdbResult
   am_i_owner() -> bool
-  generate() -> FdbKeyPair
+  generate_new_keypair() -> FdbKeyPair
   get_cids_from_dht(key: string) -> FdbGetResults
-  get_init_peer_id() -> string
+  get_datasets(key: string) -> []string
   init_service() -> FdbResult
+  ipfs_dag_get(cid: string) -> FdbGetResult
