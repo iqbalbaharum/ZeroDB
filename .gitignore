@@ -5,3 +5,6 @@ services/.repl_history
 
 # build
 services/target
+
+# DS_STORE
+.DS_STORE
