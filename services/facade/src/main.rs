@@ -8,7 +8,7 @@ use marine_rs_sdk::WasmLoggerBuilder;
 
 use auth::am_i_owner;
 use types::FdbGetResult;
-use types::{FdbGetResults, FdbKeyPair, FdbPutResult, FdbResult};
+use types::{FdbDht, FdbGetResults, FdbKeyPair, FdbPutResult, FdbResult};
 
 module_manifest!();
 
@@ -55,10 +55,10 @@ pub fn get_datasets(key: String) -> Vec<String> {
 
     let mut datas: Vec<String> = Vec::new();
 
-    for cid in results.datas.iter() {
-        match cid {
-            cid => {
-                let r = ipfs_dag_get(cid.to_string());
+    for dht in results.datas.iter() {
+        match dht {
+            dht => {
+                let r = ipfs_dag_get(dht.cid.to_string());
                 datas.push(r.data.clone());
             }
         }
@@ -72,14 +72,12 @@ pub fn get_datasets(key: String) -> Vec<String> {
  */
 #[marine]
 pub fn get_cids_from_dht(key: String) -> FdbGetResults {
-    let cids = get_records_by_key(key);
-
-    log::info!("{:?}", cids);
+    let dht = get_records_by_key(key);
 
     FdbGetResults {
         success: true,
         error: "".to_string(),
-        datas: cids,
+        datas: dht,
     }
 }
 
@@ -133,7 +131,7 @@ extern "C" {
     ) -> FdbResult;
 
     #[link_name = "get_records_by_key"]
-    pub fn get_records_by_key(key: String) -> Vec<String>;
+    pub fn get_records_by_key(key: String) -> Vec<FdbDht>;
 }
 
 #[marine]

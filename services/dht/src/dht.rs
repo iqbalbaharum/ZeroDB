@@ -42,8 +42,8 @@ pub fn insert(
 
     let conn = get_connection(DEFAULT_PATH);
 
-    // Check if PK exist
-    match get_record_by_pk(&conn, public_key.clone()) {
+    // Check if PK and key exist
+    match get_record_by_pk_and_key(&conn, public_key.clone(), key.clone()) {
         Ok(value) => {
             if value.is_none() {
                 let res = add_record(&conn, key, public_key, cid);
@@ -58,21 +58,25 @@ pub fn insert(
 }
 
 #[marine]
-pub fn get_records_by_key(key: String) -> Vec<String> {
+pub fn get_records_by_key(key: String) -> Vec<FdbDht> {
     let conn = get_connection(DEFAULT_PATH);
     let records = get_records(&conn, key).unwrap();
 
     log::info!("{:?}", records);
 
-    let mut cids = Vec::new();
+    let mut dhts = Vec::new();
 
     for record in records.iter() {
         match record {
-            _ => cids.push(record.cid.clone()),
+            _ => dhts.push(FdbDht {
+                public_key: record.public_key.clone(),
+                cid: record.cid.clone(),
+                key: record.key.clone(),
+            }),
         }
     }
 
-    cids
+    dhts
 }
 
 /************************ *********************/
@@ -178,6 +182,27 @@ pub fn get_records(conn: &Connection, key: String) -> Result<Vec<Record>> {
 pub fn get_record_by_pk(conn: &Connection, pk: String) -> Result<Option<Record>> {
     let mut cursor = conn
         .prepare(format!("select * from dht where owner_pk = '{}';", pk))?
+        .cursor();
+
+    let row = cursor.next()?;
+    if row != None {
+        let found_record = Record::from_row(row.unwrap());
+        Ok(Some(found_record.unwrap()))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn get_record_by_pk_and_key(
+    conn: &Connection,
+    pk: String,
+    key: String,
+) -> Result<Option<Record>> {
+    let mut cursor = conn
+        .prepare(format!(
+            "select * from dht where owner_pk = '{}' AND key = '{}';",
+            pk, key
+        ))?
         .cursor();
 
     let row = cursor.next()?;

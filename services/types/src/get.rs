@@ -29,11 +29,18 @@ impl From<Result<String>> for FdbGetResult {
 pub struct FdbGetResults {
     pub success: bool,
     pub error: String,
-    pub datas: Vec<String>,
+    pub datas: Vec<FdbDht>,
 }
 
-impl From<Result<Vec<String>>> for FdbGetResults {
-    fn from(result: Result<Vec<String>>) -> Self {
+#[marine]
+pub struct FdbDht {
+    pub public_key: String,
+    pub cid: String,
+    pub key: String,
+}
+
+impl From<Result<Vec<FdbDht>>> for FdbGetResults {
+    fn from(result: Result<Vec<FdbDht>>) -> Self {
         match result {
             Ok(datas) => Self {
                 success: true,
