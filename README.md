@@ -1,6 +1,6 @@
 **Generate key**
 
-![Hash process](https://photos.app.goo.gl/tiLpx9qp9WDcyVdD6)
+![Hash process](https://github.com/iqbalbaharum/ZeroDB/blob/deploy-workspace/generate_key_hash.png)
 
 Example:
 
