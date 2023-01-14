@@ -1,0 +1,47 @@
+{
+    "zero_db_ipfs": {
+      "modules": [
+        {
+            "name": "fdb_ed25519",
+            "path": "artifacts/fdb_ed25519.wasm",
+            "mem_page_count": 100,
+            "logger_enabled": true
+        },
+        {
+            "name": "fdb_ipfs",
+            "path": "artifacts/fdb_ipfs.wasm",
+            "logger_enabled": true,
+            "mounted_binaries": [["ipfs", "/usr/bin/ipfs"], ["bash", "/usr/bin/bash"]],
+            "mem_page_count": 100,
+            "envs": [["/tmp/vault", "/tmp"]]
+        },  
+        {
+            "name": "sqlite3",
+            "path": "artifacts/sqlite3.wasm",
+            "preopened_files": [
+              "/tmp"
+            ],
+            "mapped_dirs": [["tmp", "./tmp"]],
+            "logger_enabled": true
+        },
+        {
+            "name": "fdb_data",
+            "path": "artifacts/fdb_data.wasm",
+            "mem_page_count": 100,
+            "logger_enabled": true
+        },
+        {
+            "name": "fdb_dht",
+            "path": "artifacts/fdb_dht.wasm",
+            "mem_page_count": 100,
+            "logger_enabled": true
+        },
+        {
+            "name": "fdb_facade",
+            "path": "artifacts/fdb_facade.wasm",
+            "mem_page_count": 100,
+            "logger_enabled": true
+        }
+      ]
+    }
+  }
