@@ -12,4 +12,16 @@ Example:
     }
 
 
+**Deployment Process**
+
+For sk, can generate new secret key if desired, can run 
+
+    aqua key create
+
+Deploy service command, in services directory, run this command:
+
+    aqua remote deploy_service --addr /dns4/kras-04.fluence.dev/tcp/19001/wss/p2p/12D3KooWFEwNWcHqi9rtsmDhsYcDbRUCDXH84RC4FW6UfsFWaoHi --sk Wm78Ix1xmtUqPhW0We0ck8bnRHVr5phA+DBGyMgcKe0= --config-path deploy.json --service zero_db_ipfs
+
+
+
 
