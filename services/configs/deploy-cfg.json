@@ -1,5 +1,5 @@
 {
-  "zero_db_ipfs": {
+  "fdb": {
     "modules": [
       {
         "name": "fdb_ed25519",
